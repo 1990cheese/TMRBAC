@@ -1,0 +1,136 @@
+<div class="task-form-container">
+  <div class="form-header">
+    <h2>{{ isEditMode ? 'Edit Task' : 'Create New Task' }}</h2>
+    <button class="close-btn" (click)="onCancel()">✕</button>
+  </div>
+
+  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="task-form">
+    <div class="form-row">
+      <div class="form-group full-width">
+        <label for="title">Task Title *</label>
+        <input 
+          id="title"
+          type="text" 
+          formControlName="title"
+          placeholder="Enter task title"
+          [class.error]="taskForm.get('title')?.invalid && taskForm.get('title')?.touched">
+        <div class="error-message" *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched">
+          Title is required
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group full-width">
+        <label for="description">Description</label>
+        <textarea 
+          id="description"
+          formControlName="description"
+          placeholder="Enter task description"
+          rows="4">
+        </textarea>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" formControlName="status">
+          <option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="priority">Priority</label>
+        <select id="priority" formControlName="priority">
+          <option *ngFor="let priority of priorityOptions" [value]="priority.value">
+            {{ priority.icon }} {{ priority.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="assignee">Assignee</label>
+        <select id="assignee" formControlName="assignee">
+          <option value="">Unassigned</option>
+          <option *ngFor="let user of availableUsers" [value]="user">{{ user }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="reporter">Reporter *</label>
+        <select id="reporter" formControlName="reporter">
+          <option *ngFor="let user of availableUsers" [value]="user">{{ user }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="dueDate">Due Date</label>
+        <input 
+          id="dueDate"
+          type="date" 
+          formControlName="dueDate">
+      </div>
+
+      <div class="form-group">
+        <label for="estimatedHours">Estimated Hours</label>
+        <input 
+          id="estimatedHours"
+          type="number" 
+          formControlName="estimatedHours"
+          min="0"
+          step="0.5"
+          placeholder="0">
+      </div>
+    </div>
+
+    <div class="form-row" *ngIf="isEditMode">
+      <div class="form-group">
+        <label for="loggedHours">Logged Hours</label>
+        <input 
+          id="loggedHours"
+          type="number" 
+          formControlName="loggedHours"
+          min="0"
+          step="0.5"
+          placeholder="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group full-width">
+        <label for="labels">Labels</label>
+        <div class="labels-input">
+          <div class="selected-labels">
+            <span class="label-tag" *ngFor="let label of selectedLabels; let i = index">
+              {{ label }}
+              <button type="button" class="remove-label" (click)="removeLabel(i)">✕</button>
+            </span>
+          </div>
+          <input 
+            type="text" 
+            [(ngModel)]="newLabel"
+            [ngModelOptions]="{standalone: true}"
+            placeholder="Add label and press Enter"
+            (keyup.enter)="addLabel()"
+            class="label-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="taskForm.invalid">
+        {{ isEditMode ? 'Update Task' : 'Create Task' }}
+      </button>
+    </div>
+  </form>
+</div>

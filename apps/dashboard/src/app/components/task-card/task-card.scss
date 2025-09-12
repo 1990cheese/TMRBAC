@@ -1,0 +1,194 @@
+.task-card {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  outline: 2px solid var(--primary-blue-light);
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-color-hover);
+    transform: translateY(-1px);
+  }
+  
+  &.dragging {
+    opacity: 0.8;
+    transform: rotate(2deg);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  
+  .task-priority {
+    font-size: var(--font-size-lg);
+    line-height: 1;
+  }
+  
+  .task-id {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-medium);
+    background-color: var(--background-tertiary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+}
+
+.task-content {
+  margin-bottom: var(--spacing-md);
+  
+  .task-title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
+    line-height: 1.4;
+  }
+  
+  .task-description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+  }
+}
+
+.task-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  
+  .label {
+    background-color: var(--primary-blue-light);
+    color: var(--primary-blue);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.task-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.task-assignee {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  
+  .assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+  }
+  
+  .assignee-name {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  
+  .task-comments,
+  .task-attachments,
+  .task-due-date {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .task-due-date {
+    &.overdue {
+      color: var(--error-red);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+}
+
+.task-progress {
+  margin-top: var(--spacing-sm);
+  
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: var(--background-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: var(--spacing-xs);
+    
+    .progress-fill {
+      height: 100%;
+      background-color: var(--success-green);
+      transition: width 0.3s ease;
+    }
+  }
+  
+  small {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+  }
+}
+
+/* Priority-specific styling */
+.task-card {
+  &:has(.priority-critical) {
+    border-left: 4px solid var(--priority-critical);
+  }
+  
+  &:has(.priority-high) {
+    border-left: 4px solid var(--priority-high);
+  }
+  
+  &:has(.priority-medium) {
+    border-left: 4px solid var(--priority-medium);
+  }
+  
+  &:has(.priority-low) {
+    border-left: 4px solid var(--priority-low);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .task-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .task-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .task-meta {
+    align-self: flex-end;
+  }
+}
+

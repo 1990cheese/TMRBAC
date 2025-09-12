@@ -1,0 +1,39 @@
+<header class="header">
+  <div class="header-content">
+    <div class="header-left">
+      <div class="logo">
+        <h1>TaskFlow</h1>
+      </div>
+      <nav class="nav-menu">
+        <a routerLink="/board" routerLinkActive="active">Board</a>
+        <a routerLink="/projects" routerLinkActive="active">Projects</a>
+        <a routerLink="/reports" routerLinkActive="active">Reports</a>
+      </nav>
+    </div>
+    
+    <div class="header-right">
+      <div class="search-box">
+        <input type="text" placeholder="Search tasks..." [(ngModel)]="searchQuery" (input)="onSearch()">
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <div class="user-menu">
+        <div class="user-avatar" (click)="toggleUserMenu()">
+          <span>{{ currentUser.name.charAt(0) }}</span>
+        </div>
+        <div class="user-dropdown" [class.show]="showUserMenu">
+          <div class="user-info">
+            <strong>{{ currentUser.name }}</strong>
+            <small>{{ currentUser.email }}</small>
+          </div>
+          <hr>
+          <a href="#" (click)="logout()">Logout</a>
+        </div>
+      </div>
+      
+      <button class="create-task-btn" (click)="openCreateTaskModal()">
+        + Create Task
+      </button>
+    </div>
+  </div>
+</header>

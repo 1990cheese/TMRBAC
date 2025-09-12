@@ -1,0 +1,293 @@
+.board-container {
+  background-color: var(--background-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  outline: 3px solid var(--primary-blue);
+}
+
+
+// Add outline to all task cards inside board columns
+.board-column app-task-card {
+  outline: 2px solid var(--primary-blue-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+// Add outline to all task cards inside board columns
+.board-column app-task-card {
+  outline: 2px solid var(--primary-blue-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-primary);
+  
+  h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.board-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  
+  button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    background-color: white;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: var(--background-secondary);
+      border-color: var(--border-color-hover);
+    }
+  }
+}
+
+.filters-panel {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: none;
+  
+  &.show {
+    display: flex;
+    gap: var(--spacing-lg);
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    
+    label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+    }
+    
+    select {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background-color: white;
+      font-size: var(--font-size-sm);
+      min-width: 120px;
+    }
+  }
+}
+
+.board-content {
+  padding: var(--spacing-lg);
+}
+
+.board-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  min-height: 600px;
+}
+
+.board-column {
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  
+  &[data-status="TODO"] {
+    border-top: 3px solid var(--status-todo);
+  }
+  
+  &[data-status="IN_PROGRESS"] {
+    border-top: 3px solid var(--status-progress);
+  }
+  
+  &[data-status="IN_REVIEW"] {
+    border-top: 3px solid var(--status-review);
+  }
+  
+  &[data-status="DONE"] {
+    border-top: 3px solid var(--status-done);
+  }
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  
+  h3 {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+  
+  .task-count {
+    background-color: var(--background-tertiary);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.column-content {
+  flex: 1;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-height: 200px;
+}
+
+.add-task-btn {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px dashed var(--border-color);
+  background-color: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background-color: var(--primary-blue-light);
+  }
+}
+
+/* List View Styles */
+.list-view-content {
+  .tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    
+    th, td {
+      padding: var(--spacing-md);
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    th {
+      background-color: var(--background-secondary);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+    }
+    
+    tr {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background-color: var(--background-secondary);
+      }
+    }
+    
+    .task-title {
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .task-description {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+    
+    .edit-btn, .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: var(--spacing-xs);
+      margin-right: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background-color: var(--background-tertiary);
+      }
+    }
+  }
+}
+
+/* Drag and Drop Styles */
+.column-content {
+  &.drag-over {
+    background-color: var(--primary-blue-light);
+    border: 2px dashed var(--primary-blue);
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .board-columns {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .board-header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+  }
+  
+  .board-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .filters-panel {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    
+    &.show {
+      display: flex;
+    }
+  }
+  
+  .board-columns {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .board-content {
+    padding: var(--spacing-md);
+  }
+  
+  .list-view-content {
+    overflow-x: auto;
+    
+    .tasks-table {
+      min-width: 600px;
+    }
+  }
+}
+

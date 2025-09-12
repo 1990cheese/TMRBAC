@@ -1,0 +1,107 @@
+
+<div class="board-container">
+  <div class="board-header">
+    <h2>{{ boardName }}</h2>
+    <div class="board-actions">
+      <button class="filter-btn" (click)="toggleFilters()">
+        🔍 Filters
+      </button>
+      <button class="view-btn" (click)="toggleView()">
+        {{ viewMode === 'board' ? '📋 List' : '📊 Board' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-panel" [class.show]="showFilters">
+    <div class="filter-group">
+      <label>Assignee:</label>
+      <select [(ngModel)]="selectedAssignee" (change)="applyFilters()">
+        <option value="">All</option>
+        <option *ngFor="let assignee of assignees" [value]="assignee">{{ assignee }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Priority:</label>
+      <select [(ngModel)]="selectedPriority" (change)="applyFilters()">
+        <option value="">All</option>
+        <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Task Form Modal -->
+  <app-task-form
+    *ngIf="showTaskForm"
+    [initialStatus]="newTaskStatus"
+    (taskSaved)="onTaskSaved($event)"
+    (cancelled)="closeTaskForm()">
+  </app-task-form>
+
+  <div class="board-content" [class.list-view]="viewMode === 'list'">
+    <div class="board-columns" *ngIf="viewMode === 'board'">
+      <div class="board-column" *ngFor="let column of filteredColumns" 
+           [attr.data-status]="column.status">
+        <div class="column-header">
+          <h3>{{ column.name }}</h3>
+          <span class="task-count">{{ column.tasks.length }}</span>
+        </div>
+        
+        <div class="column-content" 
+             (dragover)="onDragOver($event)" 
+             (drop)="onDrop($event, column.status)">
+          <app-task-card 
+            *ngFor="let task of column.tasks" 
+            [task]="task"
+            [draggable]="true"
+            (dragstart)="onDragStart($event, task)"
+            (taskClicked)="onTaskClicked(task)"
+            (taskUpdated)="onTaskUpdated($event)">
+          </app-task-card>
+          
+          <button class="add-task-btn" (click)="addTaskToColumn(column.status)">
+            + Add a task
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="list-view-content" *ngIf="viewMode === 'list'">
+      <table class="tasks-table">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Assignee</th>
+            <th>Due Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let task of allFilteredTasks" (click)="onTaskClicked(task)">
+            <td>
+              <div class="task-title">{{ task.title }}</div>
+              <div class="task-description">{{ task.description }}</div>
+            </td>
+            <td>
+              <span class="status-badge" [class]="'status-' + task.status.toLowerCase()">
+                {{ task.status }}
+              </span>
+            </td>
+            <td>
+              <span class="priority-badge" [class]="'priority-' + task.priority.toLowerCase()">
+                {{ task.priority }}
+              </span>
+            </td>
+            <td>{{ task.assignee || 'Unassigned' }}</td>
+            <td>{{ task.dueDate | date:'short' }}</td>
+            <td>
+              <button class="edit-btn" (click)="editTask(task); $event.stopPropagation()">✏️</button>
+              <button class="delete-btn" (click)="deleteTask(task.id); $event.stopPropagation()">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

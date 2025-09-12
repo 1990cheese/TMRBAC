@@ -1,0 +1,34 @@
+<div class="p-6">
+    <h1 class="text-3xl font-bold mb-6">User Management</h1>
+    <div *ngIf="users$ | async as users; else loading" class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Role</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change Role</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let user of users">
+            <td class="px-6 py-4 whitespace-nowrap">{{ user.firstName }} {{ user.lastName }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ user.email }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ user.roleName || 'N/A' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <select (change)="onRoleChange($event, user.id)" 
+                      class="mt-1 block w-full pl-3 pr-10 py-2 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
+                <option *ngFor="let role of availableRoles" 
+                        [value]="role"
+                        [selected]="role === user.roleName">
+                  {{ role }}
+                </option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #loading><p>Loading users...</p></ng-template>
+  </div>
+  

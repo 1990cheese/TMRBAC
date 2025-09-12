@@ -1,0 +1,53 @@
+<div class="task-card"
+  [class.dragging]="isDragging"
+  (click)="onCardClick()"
+  (dragstart)="onDragStart($event)"
+  (dragend)="onDragEnd()"
+  [attr.draggable]="draggable ? true : null">
+  
+  <div class="task-header">
+    <div class="task-priority" [class]="'priority-' + task.priority.toLowerCase()">
+      {{ getPriorityIcon() }}
+    </div>
+    <div class="task-id">{{ task.id.toUpperCase() }}</div>
+  </div>
+
+  <div class="task-content">
+    <h4 class="task-title">{{ task.title }}</h4>
+    <p class="task-description" *ngIf="task.description">
+      {{ task.description | slice:0:100 }}{{ task.description.length > 100 ? '...' : '' }}
+    </p>
+  </div>
+
+  <div class="task-labels" *ngIf="task.labels.length > 0">
+    <span class="label" *ngFor="let label of task.labels">{{ label }}</span>
+  </div>
+
+  <div class="task-footer">
+    <div class="task-assignee" *ngIf="task.assignee">
+      <div class="assignee-avatar">
+        {{ task.assignee.charAt(0).toUpperCase() }}
+      </div>
+      <span class="assignee-name">{{ task.assignee }}</span>
+    </div>
+    
+    <div class="task-meta">
+      <div class="task-comments" *ngIf="task.comments.length > 0">
+        💬 {{ task.comments.length }}
+      </div>
+      <div class="task-attachments" *ngIf="task.attachments.length > 0">
+        📎 {{ task.attachments.length }}
+      </div>
+      <div class="task-due-date" *ngIf="task.dueDate" [class.overdue]="isOverdue()">
+        📅 {{ task.dueDate | date:'MMM d' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="task-progress" *ngIf="task.estimatedHours && task.loggedHours">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+    </div>
+    <small>{{ task.loggedHours }}h / {{ task.estimatedHours }}h</small>
+  </div>
+</div>

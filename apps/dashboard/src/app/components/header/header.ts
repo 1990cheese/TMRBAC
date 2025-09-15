@@ -1,4 +1,5 @@
 import { Component, Output, EventEmitter } from '@angular/core';
+import { SearchService } from '../../services/search.service';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
@@ -22,7 +23,7 @@ export class Header {
   showUserMenu = false;
   currentUser: User | null = null;
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(private authService: AuthService, private router: Router, private searchService: SearchService) {
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.currentUser = {
@@ -38,7 +39,7 @@ export class Header {
   }
 
   onSearch(): void {
-    this.searchChanged.emit(this.searchQuery);
+    this.searchService.setSearchQuery(this.searchQuery);
   }
 
   toggleUserMenu(): void {

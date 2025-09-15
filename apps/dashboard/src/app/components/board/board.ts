@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../services/task.service';
 import { Task, TaskStatus, TaskPriority, BoardColumn } from '../../models/task.model';
 import { TaskCard } from '../task-card/task-card';
+
 import { TaskForm } from '../task-form/task-form';
+import { AuthService } from '../../services/auth.service';
+import { SearchService } from '../../services/search.service';
 
 @Component({
   selector: 'app-board',
@@ -12,6 +15,7 @@ import { TaskForm } from '../task-form/task-form';
   templateUrl: './board.html',
   styleUrl: './board.scss'
 })
+
 export class Board implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['searchQuery']) {
@@ -56,7 +60,15 @@ export class Board implements OnInit, OnChanges {
   newTaskStatus: TaskStatus | null = null;
   selectedTask: Task | null = null;
 
-  constructor(private taskService: TaskService) {}
+  constructor(private taskService: TaskService, private authService: AuthService, private searchService: SearchService) {
+    this.searchService.searchQuery$.subscribe(query => {
+      this.searchQuery = query;
+      this.updateFilteredData();
+    });
+  }
+  logout(): void {
+    this.authService.logout();
+  }
 
   ngOnInit(): void {
     // Subscribe to tasks from backend

@@ -17,7 +17,7 @@ export const routes: Routes = [
   },
   {
     path: 'tasks',
-    loadComponent: () => import('./components/board/board').then(m => m.Board),
+    loadComponent: () => import('./components/dashboard-layout/dashboard-layout').then(m => m.DashboardLayout),
     canActivate: [authGuard]
   },
   {

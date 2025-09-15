@@ -1,16 +1,15 @@
 
+
+
+
 <app-warning-modal [visible]="!!accessWarning" [message]="accessWarning || ''" (closed)="closeAccessWarning()"></app-warning-modal>
 <div class="app-container">
-  <app-header 
+  <app-header *ngIf="!isAuthRoute()"
     (createTaskClicked)="openCreateTaskModal()"
     (searchChanged)="onSearchChanged($event)">
   </app-header>
   <main class="main-content">
-    <app-board
-      [searchQuery]="searchQuery"
-      (taskClicked)="openTaskDetails($event)"
-      (createTaskClicked)="openCreateTaskModal($event)">
-    </app-board>
+    <router-outlet></router-outlet>
   </main>
 </div>
 

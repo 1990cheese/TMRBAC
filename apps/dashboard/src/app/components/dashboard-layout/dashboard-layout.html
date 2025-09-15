@@ -1,0 +1,7 @@
+<main class="main-content">
+  <app-board
+    [searchQuery]="searchQuery"
+    (taskClicked)="openTaskDetails($event)"
+    (createTaskClicked)="openCreateTaskModal()">
+  </app-board>
+</main>

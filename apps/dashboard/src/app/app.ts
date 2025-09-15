@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Header } from './components/header/header';
 import { Board } from './components/board/board';
 import { TaskForm } from './components/task-form/task-form';
+import { DashboardLayout } from './components/dashboard-layout/dashboard-layout';
 import { Task, TaskStatus } from './models/task.model';
 import { TaskService } from './services/task.service';
 import { RouterOutlet } from '@angular/router';
@@ -11,22 +13,23 @@ import { WarningModalComponent } from './components/shared/warning-modal.compone
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, Header, Board, TaskForm, RouterOutlet, WarningModalComponent],
+  imports: [CommonModule, Header, Board, TaskForm, RouterOutlet, WarningModalComponent, DashboardLayout],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
   title = 'Task Management System';
-  
   showTaskModal = false;
   selectedTask: Task | null = null;
   initialTaskStatus: TaskStatus | null = null;
   searchQuery = '';
-
-  // Access warning modal state
   accessWarning: string | null = null;
 
-  constructor(private taskService: TaskService, private accessWarningService: AccessWarningService) {
+  constructor(
+    private taskService: TaskService,
+    private accessWarningService: AccessWarningService,
+    public router: Router
+  ) {
     this.accessWarningService.warning$.subscribe(msg => {
       this.accessWarning = msg;
     });
@@ -69,5 +72,10 @@ export class App {
 
   closeAccessWarning() {
     this.accessWarningService.clearWarning();
+  }
+
+  isAuthRoute(): boolean {
+    const url = this.router.url;
+    return url === '/login' || url === '/register';
   }
 }

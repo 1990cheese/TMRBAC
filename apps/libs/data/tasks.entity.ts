@@ -1,3 +1,9 @@
+export enum TaskPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL',
+}
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -11,10 +17,10 @@ import {
   import { Organization } from './organization.entity';
   
   export enum TaskStatus {
-    OPEN = 'open',
-    IN_PROGRESS = 'in_progress',
-    DONE = 'done',
-    ARCHIVED = 'archived',
+  TODO = 'TODO',
+  IN_PROGRESS = 'IN_PROGRESS',
+  IN_REVIEW = 'IN_REVIEW',
+  DONE = 'DONE',
   }
   
   @Entity('tasks')
@@ -27,8 +33,11 @@ import {
   
     @Column({ nullable: true })
     description?: string;
+
+    @Column({ enum: TaskPriority})
+    priority!: TaskPriority;
   
-    @Column({ enum: TaskStatus, default: TaskStatus.OPEN })
+    @Column({ enum: TaskStatus })
     status!: TaskStatus;
   
     @CreateDateColumn()
@@ -67,7 +76,18 @@ import {
     })
     @JoinColumn({ name: 'assigneeId' })
     assignee?: User;
-  
+
     @Column({ nullable: true })
     assigneeId?: string; // Foreign key column for assignee
+
+    // Many tasks can be reported by one user
+    @ManyToOne(() => User, (user) => user.reportedTasks, {
+      nullable: true,
+      onDelete: 'SET NULL', // If reporter is deleted, set reporterId to NULL
+    })
+    @JoinColumn({ name: 'reporterId' })
+    reporter?: User;
+
+    @Column({ nullable: true })
+    reporterId?: string; // Foreign key column for reporter
   }

@@ -19,25 +19,18 @@
     </p>
   </div>
 
-  <div class="task-labels" *ngIf="task.labels.length > 0">
-    <span class="label" *ngFor="let label of task.labels">{{ label }}</span>
-  </div>
 
   <div class="task-footer">
     <div class="task-assignee" *ngIf="task.assignee">
       <div class="assignee-avatar">
-        {{ task.assignee.charAt(0).toUpperCase() }}
+        {{ assigneeInitials }}
       </div>
-      <span class="assignee-name">{{ task.assignee }}</span>
+      <span class="assignee-name">
+        {{ assigneeName }}
+      </span>
     </div>
     
     <div class="task-meta">
-      <div class="task-comments" *ngIf="task.comments.length > 0">
-        💬 {{ task.comments.length }}
-      </div>
-      <div class="task-attachments" *ngIf="task.attachments.length > 0">
-        📎 {{ task.attachments.length }}
-      </div>
       <div class="task-due-date" *ngIf="task.dueDate" [class.overdue]="isOverdue()">
         📅 {{ task.dueDate | date:'MMM d' }}
       </div>

@@ -1,6 +1,6 @@
 <div class="p-6">
     <h1 class="text-3xl font-bold mb-6">User Management</h1>
-    <div *ngIf="users$ | async as users; else loading" class="bg-white shadow rounded-lg overflow-x-auto">
+  <div *ngIf="users.length > 0; else loading" class="bg-white shadow rounded-lg overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -14,13 +14,11 @@
           <tr *ngFor="let user of users">
             <td class="px-6 py-4 whitespace-nowrap">{{ user.firstName }} {{ user.lastName }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ user.email }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ user.roleName || 'N/A' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <select (change)="onRoleChange($event, user.id)" 
+            <td class="px-6 py-4 whitespace-nowrap">{{ user.roles && user.roles.length > 0 ? user.roles[0].name : 'No role assigned' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap flex items-center gap-2">
+              <select [(ngModel)]="selectedRoles[user.id]"
                       class="mt-1 block w-full pl-3 pr-10 py-2 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
-                <option *ngFor="let role of availableRoles" 
-                        [value]="role"
-                        [selected]="role === user.roleName">
+                <option *ngFor="let role of availableRoles" [value]="role">
                   {{ role }}
                 </option>
               </select>
@@ -29,6 +27,13 @@
         </tbody>
       </table>
     </div>
+    <div class="mt-4 flex justify-end">
+      <button (click)="saveAllRoles()"
+              [disabled]="!hasPendingChanges() || savingAll"
+              class="px-6 py-2 rounded bg-blue-600 text-white font-bold disabled:bg-gray-400">
+        Save All
+      </button>
+    </div>
     <ng-template #loading><p>Loading users...</p></ng-template>
   </div>
-  
+  <app-warning-modal [visible]="showModal" [message]="modalMessage" (closed)="showModal = false"></app-warning-modal>

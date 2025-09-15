@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { User, Organization, CreateOrganizationDto } from '../../../../libs/data/';
 
 @Injectable()
 export class OrganizationsService {
+  private readonly logger = new Logger(OrganizationsService.name);
   constructor(
       @InjectRepository(Organization)
       private readonly orgRepository:
@@ -35,7 +37,9 @@ export class OrganizationsService {
       throw new NotFoundException(`User with ID "${userId}" not found`);
     }
 
-    user.organizationId = organization.id;
-    return this.orgRepository.save(user);
+  user.organizationId = organization.id;
+  const updatedUser = await this.userRepository.save(user);
+  this.logger.log(`User added to organization: userId=${userId}, organizationId=${organizationId}`);
+  return updatedUser;
   }
 }

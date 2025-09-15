@@ -69,7 +69,10 @@ import {
     @OneToMany(() => Task, (task) => task.assignee)
     assignedTasks!: Task[];
   
-    @OneToMany(() => Task, (task) => task.creator)
-    createdTasks!: Task[];
+  @OneToMany(() => Task, (task) => task.creator)
+  createdTasks!: Task[];
+
+  @OneToMany(() => Task, (task) => task.reporter)
+  reportedTasks!: Task[];
   }
   

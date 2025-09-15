@@ -7,43 +7,6 @@
   outline: 2px solid var(--primary-blue);
 }
 
-.form-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--background-secondary);
-  
-  h2 {
-    margin: 0;
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-  }
-  
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: var(--font-size-lg);
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
-    transition: all 0.2s ease;
-    
-    &:hover {
-      background-color: var(--background-tertiary);
-      color: var(--text-primary);
-    }
-  }
-}
-
-.task-form {
-  padding: var(--spacing-lg);
-  max-height: 70vh;
-  overflow-y: auto;
-}
 
 .form-row {
   display: flex;

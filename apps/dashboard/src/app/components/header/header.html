@@ -5,9 +5,11 @@
         <h1>TaskFlow</h1>
       </div>
       <nav class="nav-menu">
-        <a routerLink="/board" routerLinkActive="active">Board</a>
-        <a routerLink="/projects" routerLinkActive="active">Projects</a>
-        <a routerLink="/reports" routerLinkActive="active">Reports</a>
+        <a *ngIf="currentUser" routerLink="/tasks" routerLinkActive="active">Tasks</a>
+        <a *ngIf="currentUser" routerLink="/admin/users" routerLinkActive="active">User Management</a>
+        <a *ngIf="currentUser" routerLink="/admin/organizations" routerLinkActive="active">Organization Management</a>
+        <a *ngIf="!currentUser" routerLink="/login" routerLinkActive="active">Login</a>
+        <a *ngIf="!currentUser" routerLink="/register" routerLinkActive="active">Register</a>
       </nav>
     </div>
     
@@ -19,21 +21,18 @@
       
       <div class="user-menu">
         <div class="user-avatar" (click)="toggleUserMenu()">
-          <span>{{ currentUser.name.charAt(0) }}</span>
+          <span>{{ (currentUser?.firstName?.charAt(0) || currentUser?.email?.charAt(0) || '') }}</span>
         </div>
         <div class="user-dropdown" [class.show]="showUserMenu">
           <div class="user-info">
-            <strong>{{ currentUser.name }}</strong>
-            <small>{{ currentUser.email }}</small>
+            <strong>{{ (currentUser?.firstName && currentUser?.lastName) ? (currentUser?.firstName + ' ' + currentUser?.lastName) : (currentUser?.email || '') }}</strong>
+            <small>{{ currentUser?.email || '' }}</small>
           </div>
           <hr>
           <a href="#" (click)="logout()">Logout</a>
         </div>
       </div>
       
-      <button class="create-task-btn" (click)="openCreateTaskModal()">
-        + Create Task
-      </button>
     </div>
   </div>
 </header>

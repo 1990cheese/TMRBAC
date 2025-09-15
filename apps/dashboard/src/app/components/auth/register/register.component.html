@@ -54,6 +54,15 @@
           <div *ngIf="registerForm.get('password')?.invalid && (registerForm.get('password')?.dirty || registerForm.get('password')?.touched)" class="text-red-500 text-xs mt-1">
             <div *ngIf="registerForm.get('password')?.errors?.['required']">Password is required.</div>
             <div *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters.</div>
+            <div *ngIf="registerForm.get('password')?.errors?.['pattern']">
+              Password must contain:
+              <ul class="list-disc ml-4">
+                <li>At least one uppercase letter</li>
+                <li>At least one lowercase letter</li>
+                <li>At least one digit</li>
+                <li>At least one special character (@$!%*?&)</li>
+              </ul>
+            </div>
           </div>
         </div>
         <button

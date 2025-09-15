@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, Role, RoleName } from '../../../../libs/data';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -27,8 +29,9 @@ export class UsersService {
       throw new NotFoundException(`Role "${roleName}" not found`);
     }
 
-    user.roles = [newRole]; // Replace existing roles with the new one
-    await this.usersRepository.save(user);
-    return user;
+  user.roles = [newRole]; // Replace existing roles with the new one
+  await this.usersRepository.save(user);
+  this.logger.log(`User role updated: userId=${userId}, newRole=${roleName}`);
+  return user;
   }
 }

@@ -4,14 +4,11 @@ export interface Task {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assignee?: string;
-  reporter: string;
+  assignee?: User;
+  reporter?: User;
   createdDate: Date;
   updatedDate: Date;
   dueDate?: Date;
-  labels: string[];
-  comments: Comment[];
-  attachments: Attachment[];
   estimatedHours?: number;
   loggedHours?: number;
 }
@@ -57,10 +54,9 @@ export interface Project {
 
 export interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  avatar?: string;
-  role: UserRole;
 }
 
 export enum UserRole {

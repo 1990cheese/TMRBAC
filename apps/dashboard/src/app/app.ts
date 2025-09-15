@@ -6,10 +6,12 @@ import { TaskForm } from './components/task-form/task-form';
 import { Task, TaskStatus } from './models/task.model';
 import { TaskService } from './services/task.service';
 import { RouterOutlet } from '@angular/router';
+import { AccessWarningService } from './services/access-warning.service';
+import { WarningModalComponent } from './components/shared/warning-modal.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, Header, Board, TaskForm, RouterOutlet],
+  imports: [CommonModule, Header, Board, TaskForm, RouterOutlet, WarningModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -21,7 +23,14 @@ export class App {
   initialTaskStatus: TaskStatus | null = null;
   searchQuery = '';
 
-  constructor(private taskService: TaskService) {}
+  // Access warning modal state
+  accessWarning: string | null = null;
+
+  constructor(private taskService: TaskService, private accessWarningService: AccessWarningService) {
+    this.accessWarningService.warning$.subscribe(msg => {
+      this.accessWarning = msg;
+    });
+  }
 
   openCreateTaskModal(status?: TaskStatus): void {
     this.selectedTask = null;
@@ -56,5 +65,9 @@ export class App {
     this.searchQuery = query;
     // Implement search functionality
     console.log('Search query:', query);
+  }
+
+  closeAccessWarning() {
+    this.accessWarningService.clearWarning();
   }
 }

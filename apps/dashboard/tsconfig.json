@@ -10,6 +10,8 @@
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "module": "preserve",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
 
   },
   "angularCompilerOptions": {

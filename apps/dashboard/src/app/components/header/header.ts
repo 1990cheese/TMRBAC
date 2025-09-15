@@ -1,4 +1,6 @@
 import { Component, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,18 +13,29 @@ import { User, UserRole } from '../../models/task.model';
   styleUrl: './header.scss'
 })
 export class Header {
+
+
   @Output() createTaskClicked = new EventEmitter<void>();
   @Output() searchChanged = new EventEmitter<string>();
 
   searchQuery = '';
   showUserMenu = false;
-  
-  currentUser: User = {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    role: UserRole.DEVELOPER
-  };
+  currentUser: User | null = null;
+
+  constructor(private authService: AuthService, private router: Router) {
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.currentUser = {
+          id: user.id ?? '',
+          firstName: user.firstName ?? '',
+          lastName: user.lastName ?? '',
+          email: user.email ?? 'Unknown'
+        };
+      } else {
+        this.currentUser = null;
+      }
+    });
+  }
 
   onSearch(): void {
     this.searchChanged.emit(this.searchQuery);
@@ -40,5 +53,7 @@ export class Header {
     // Implement logout logic
     console.log('Logout clicked');
     this.showUserMenu = false;
+    // Optionally clear user state
+    this.authService.logout();
   }
 }

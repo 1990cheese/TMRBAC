@@ -6,6 +6,7 @@ export interface User {
   lastName?: string;
   organizationId?: string;
   roleName?: string;
+  roles?: { name: string }[];
 }
 
-export type RoleName = 'user' | 'admin' | 'manager';
+export type RoleName = 'USER' | 'ADMIN' | 'OWNER';

@@ -80,10 +80,54 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  isLoggedIn(): boolean {
+    return this.isAuthenticated();
+  }
+
+  hasPermission(permission: string): boolean {
+    const user = this.getUserFromStorage();
+    if (!user || !user.roles) {
+      return false;
+    }
+    // Static permission map by role name, mirroring backend
+    const rolePermissionMap: Record<string, string[]> = {
+      OWNER: [
+        // All permissions
+        'CREATE_USER', 'READ_USER', 'UPDATE_USER', 'DELETE_USER', 'ASSIGN_ROLES',
+        'CREATE_ORGANIZATION', 'READ_ORGANIZATION', 'UPDATE_ORGANIZATION', 'DELETE_ORGANIZATION',
+        'CREATE_TASK', 'READ_TASK', 'UPDATE_TASK', 'DELETE_TASK',
+        'READ_AUDIT_LOG',
+        'READ_OWN_TASK', 'UPDATE_OWN_TASK', 'DELETE_OWN_TASK',
+        'READ_OWN_PROFILE', 'UPDATE_OWN_PROFILE'
+      ],
+      ADMIN: [
+        'READ_USER', 'CREATE_TASK', 'READ_TASK', 'UPDATE_TASK',
+        'READ_ORGANIZATION', 'READ_AUDIT_LOG',
+        'READ_OWN_TASK', 'UPDATE_OWN_TASK',
+        'READ_OWN_PROFILE', 'UPDATE_OWN_PROFILE'
+      ],
+      USER: [
+        'CREATE_TASK', 'READ_TASK',
+        'READ_OWN_TASK', 'UPDATE_OWN_TASK', 'DELETE_OWN_TASK',
+        'READ_OWN_PROFILE', 'UPDATE_OWN_PROFILE'
+      ],
+      GUEST: [
+        'READ_OWN_PROFILE'
+      ]
+    };
+    for (const role of user.roles) {
+      const perms = rolePermissionMap[role.name?.toUpperCase()];
+      if (perms && perms.includes(permission)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Helper function to retrieve the user object from storage on app load.
    */
-  private getUserFromStorage(): User | null {
+  public getUserFromStorage(): User | null {
     const userJson = localStorage.getItem('currentUser');
     if (!userJson) {
       return null;

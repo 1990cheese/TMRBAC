@@ -1,12 +1,13 @@
+
+<app-warning-modal [visible]="!!accessWarning" [message]="accessWarning || ''" (closed)="closeAccessWarning()"></app-warning-modal>
 <div class="app-container">
-  
   <app-header 
     (createTaskClicked)="openCreateTaskModal()"
     (searchChanged)="onSearchChanged($event)">
   </app-header>
-  
   <main class="main-content">
-    <app-board 
+    <app-board
+      [searchQuery]="searchQuery"
       (taskClicked)="openTaskDetails($event)"
       (createTaskClicked)="openCreateTaskModal($event)">
     </app-board>

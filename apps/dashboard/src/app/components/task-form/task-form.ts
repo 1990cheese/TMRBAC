@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Task, TaskStatus, TaskPriority } from '../../models/task.model';
+import { UsersService } from '../../services/users.service';
+import { User } from '../../models/task.model';
+import { AuthService } from '../../services/auth.service';
+import { OrganizationsService } from '../../services/organizations.service';
 
 @Component({
   selector: 'app-task-form',
@@ -11,15 +15,15 @@ import { Task, TaskStatus, TaskPriority } from '../../models/task.model';
   styleUrl: './task-form.scss'
 })
 export class TaskForm implements OnInit, OnChanges {
+  
   @Input() task: Task | null = null;
   @Input() initialStatus: TaskStatus | null = null;
   @Output() taskSaved = new EventEmitter<Task>();
   @Output() cancelled = new EventEmitter<void>();
+ 
 
   taskForm!: FormGroup;
   isEditMode = false;
-  selectedLabels: string[] = [];
-  newLabel = '';
 
   statusOptions = [
     { value: TaskStatus.TODO, label: 'To Do' },
@@ -35,44 +39,112 @@ export class TaskForm implements OnInit, OnChanges {
     { value: TaskPriority.CRITICAL, label: 'Critical', icon: '🔴' }
   ];
 
-  availableUsers = [
-    'John Doe',
-    'Jane Smith',
-    'Alice Johnson',
-    'Bob Wilson',
-    'Carol Davis'
-  ];
+  availableUsers: User[] = [];
+  currentUserOrgId: string | null = null;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private usersService: UsersService,
+    private authService: AuthService,
+    private organizationsService: OrganizationsService
+  ) {}
 
   ngOnInit(): void {
-    this.initializeForm();
+  console.log('[TaskForm] ngOnInit status:', this.task?.status, this.initialStatus);
+    // Get current user's organizationId and role
+    const currentUser = this.authService.getUserFromStorage();
+    this.currentUserOrgId = currentUser?.organizationId ?? null;
+    const currentUserRole = currentUser?.roles?.[0]?.name ?? null;
+    const orgId = this.currentUserOrgId ? String(this.currentUserOrgId) : '';
+    if (!orgId) {
+      this.availableUsers = [];
+      this.initializeForm();
+      return;
+    }
+    Promise.all([
+      this.usersService.getUsers().toPromise(),
+      this.organizationsService.getOrganizations().toPromise()
+    ]).then((results) => {
+      const users = (results[0] ?? []).map((u: any) => ({
+        id: u.id,
+        firstName: typeof u.firstName === 'string' ? u.firstName : '',
+        lastName: typeof u.lastName === 'string' ? u.lastName : '',
+        email: typeof u.email === 'string' ? u.email : '',
+        organizationId: typeof u.organizationId === 'string' ? u.organizationId : ''
+      }));
+      const orgs: any[] = results[1] ?? [];
+      let orgIds: string[] = [];
+      if (currentUserRole === 'OWNER') {
+        // Find all child orgs recursively
+        const findChildOrgIds = (parentId: string): string[] => {
+          const children: any[] = orgs.filter((o: any) => o.parentId === parentId);
+          let ids: string[] = children.map((c: any) => c.id);
+          for (const child of children) {
+            ids = ids.concat(findChildOrgIds(child.id));
+          }
+          return ids;
+        };
+        orgIds = [orgId, ...findChildOrgIds(orgId)];
+      } else {
+        orgIds = [orgId];
+      }
+      this.availableUsers = users
+        .filter((u: any) => orgIds.includes(u.organizationId))
+        .map((u: any) => ({
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email
+        }));
+      this.initializeForm();
+    });
   }
 
   ngOnChanges(): void {
+  console.log('[TaskForm] ngOnChanges status:', this.task?.status, this.initialStatus);
     if (this.taskForm) {
+      this.taskForm.markAsDirty();
+      console.log(this.taskForm)
       this.initializeForm();
     }
   }
 
+  onDropdownChange(): void {
+  console.log('[TaskForm] onDropdownChange status:', this.taskForm?.get('status')?.value);
+    if (this.taskForm) {
+      this.taskForm.markAsDirty();
+      Object.keys(this.taskForm.controls).forEach(key => {
+        this.taskForm.controls[key].markAsTouched();
+        this.taskForm.controls[key].updateValueAndValidity();
+      });
+    }
+  }
+
   private initializeForm(): void {
+  console.log('[TaskForm] initializeForm status:', this.task?.status, this.initialStatus);
     this.isEditMode = !!this.task;
-    
-    const defaultStatus = this.initialStatus || TaskStatus.TODO;
-    
+
+    let statusInit: TaskStatus;
+    if (this.isEditMode) {
+      statusInit = this.task?.status || TaskStatus.TODO;
+    } else {
+      statusInit = this.initialStatus ?? TaskStatus.TODO;
+    }
+
+    console.log('statusInit:', statusInit);
     this.taskForm = this.fb.group({
       title: [this.task?.title || '', [Validators.required]],
       description: [this.task?.description || ''],
-      status: [this.task?.status || defaultStatus],
-      priority: [this.task?.priority || TaskPriority.MEDIUM],
-      assignee: [this.task?.assignee || ''],
-      reporter: [this.task?.reporter || 'John Doe', [Validators.required]],
-      dueDate: [this.task?.dueDate ? this.formatDateForInput(this.task.dueDate) : ''],
-      estimatedHours: [this.task?.estimatedHours || null],
-      loggedHours: [this.task?.loggedHours || null]
+      status: [statusInit],
+      priority: [this.task?.priority || TaskPriority.MEDIUM, [Validators.required]],
+      assignee: [this.task?.assignee?.id || '', [Validators.required]],
+      reporter: [this.task?.reporter?.id || '', [Validators.required]],
     });
 
-    this.selectedLabels = this.task?.labels ? [...this.task.labels] : [];
+    this.taskForm.markAsPristine();
+
+        
+
   }
 
   private formatDateForInput(date: Date): string {
@@ -80,39 +152,26 @@ export class TaskForm implements OnInit, OnChanges {
     return d.toISOString().split('T')[0];
   }
 
-  addLabel(): void {
-    if (this.newLabel.trim() && !this.selectedLabels.includes(this.newLabel.trim())) {
-      this.selectedLabels.push(this.newLabel.trim());
-      this.newLabel = '';
-    }
-  }
-
-  removeLabel(index: number): void {
-    this.selectedLabels.splice(index, 1);
-  }
 
   onSubmit(): void {
+  console.log('[TaskForm] onSubmit status:', this.taskForm?.get('status')?.value);
     if (this.taskForm.valid) {
       const formValue = this.taskForm.value;
-      
+      // Find selected assignee and reporter objects
+      const assigneeObj = this.availableUsers.find(u => u.id === formValue.assignee) || undefined;
+      const reporterObj = this.availableUsers.find(u => u.id === formValue.reporter) || undefined;
       const taskData: Task = {
         id: this.task?.id || this.generateId(),
         title: formValue.title,
         description: formValue.description,
         status: formValue.status,
         priority: formValue.priority,
-        assignee: formValue.assignee || undefined,
-        reporter: formValue.reporter,
+        assignee: assigneeObj,
+        reporter: reporterObj,
         createdDate: this.task?.createdDate || new Date(),
         updatedDate: new Date(),
-        dueDate: formValue.dueDate ? new Date(formValue.dueDate) : undefined,
-        labels: [...this.selectedLabels],
-        comments: this.task?.comments || [],
-        attachments: this.task?.attachments || [],
-        estimatedHours: formValue.estimatedHours || undefined,
-        loggedHours: formValue.loggedHours || undefined
       };
-
+      console.log('taskData to emit:', taskData);
       this.taskSaved.emit(taskData);
     }
   }

@@ -15,4 +15,9 @@ export class UpdateTaskDto extends PartialType(CreateTaskDto) {
   @IsOptional()
   @IsUUID('4', { message: 'Invalid assigneeId format' })
   override assigneeId?: string; // Optional: Update assignee
+
+  @IsString()
+  @IsOptional()
+  @IsUUID('4', { message: 'Invalid reporterId format' })
+  override reporterId?: string; // Optional: Update reporter
 }

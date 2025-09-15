@@ -28,4 +28,5 @@
       </div>
       <ng-template #loadingForm><p>Loading data...</p></ng-template>
     </div>
+    <app-warning-modal [visible]="showModal" [message]="modalMessage" (closed)="showModal = false"></app-warning-modal>
   </div>

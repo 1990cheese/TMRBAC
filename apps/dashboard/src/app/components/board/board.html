@@ -30,12 +30,17 @@
   </div>
 
   <!-- Task Form Modal -->
-  <app-task-form
-    *ngIf="showTaskForm"
-    [initialStatus]="newTaskStatus"
-    (taskSaved)="onTaskSaved($event)"
-    (cancelled)="closeTaskForm()">
-  </app-task-form>
+  <div *ngIf="showTaskForm" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" (click)="closeTaskForm()">&times;</button>
+      <app-task-form
+        [task]="selectedTask"
+        [initialStatus]="newTaskStatus"
+        (taskSaved)="onTaskSaved($event)"
+        (cancelled)="closeTaskForm()">
+      </app-task-form>
+    </div>
+  </div>
 
   <div class="board-content" [class.list-view]="viewMode === 'list'">
     <div class="board-columns" *ngIf="viewMode === 'board'">
@@ -82,18 +87,29 @@
             <td>
               <div class="task-title">{{ task.title }}</div>
               <div class="task-description">{{ task.description }}</div>
-            </td>
             <td>
               <span class="status-badge" [class]="'status-' + task.status.toLowerCase()">
                 {{ task.status }}
               </span>
-            </td>
             <td>
               <span class="priority-badge" [class]="'priority-' + task.priority.toLowerCase()">
                 {{ task.priority }}
               </span>
             </td>
-            <td>{{ task.assignee || 'Unassigned' }}</td>
+            <td>
+              <span class="assignee-avatar">
+                {{ getAssigneeAvatar(task) }}
+              </span>
+              <span class="assignee-name">
+                {{
+                  typeof task.assignee === 'string'
+                    ? task.assignee
+                    : (typeof task.assignee === 'object' && task.assignee !== null)
+                      ? (((task.assignee.firstName?.trim() || '') + (task.assignee.lastName ? ' ' + task.assignee.lastName.trim() : '')).trim() || task.assignee.email || 'Unassigned')
+                      : 'Unassigned'
+                }}
+              </span>
+            </td>
             <td>{{ task.dueDate | date:'short' }}</td>
             <td>
               <button class="edit-btn" (click)="editTask(task); $event.stopPropagation()">✏️</button>

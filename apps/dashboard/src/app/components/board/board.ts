@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../services/task.service';
@@ -12,7 +12,27 @@ import { TaskForm } from '../task-form/task-form';
   templateUrl: './board.html',
   styleUrl: './board.scss'
 })
-export class Board implements OnInit {
+export class Board implements OnInit, OnChanges {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['searchQuery']) {
+      this.updateFilteredData();
+    }
+  }
+  // Search query from header
+  @Input() searchQuery: string = '';
+  getAssigneeAvatar(task: Task): string {
+    if (!task.assignee) return '?';
+    if (typeof task.assignee === 'string' && !!task.assignee) {
+      return (task.assignee as string).charAt(0).toUpperCase();
+    }
+    if (typeof task.assignee === 'object' && task.assignee !== null) {
+      const first = task.assignee.firstName?.trim()?.charAt(0) || '';
+      const last = task.assignee.lastName?.trim()?.charAt(0) || '';
+      if (first || last) return (first + last).toUpperCase();
+      if (task.assignee.email) return task.assignee.email.charAt(0).toUpperCase();
+    }
+    return '?';
+  }
   @Output() taskClicked = new EventEmitter<Task>();
   @Output() createTaskClicked = new EventEmitter<TaskStatus>();
 
@@ -34,12 +54,13 @@ export class Board implements OnInit {
 
   showTaskForm = false;
   newTaskStatus: TaskStatus | null = null;
+  selectedTask: Task | null = null;
 
   constructor(private taskService: TaskService) {}
 
   ngOnInit(): void {
-    // Subscribe to tasks and rebuild columns on every change
-    this.taskService.tasks$.subscribe(tasks => {
+    // Subscribe to tasks from backend
+    this.taskService.getTasks().subscribe(tasks => {
       this.allTasks = tasks;
       this.rebuildColumns();
       this.updateFilteredData();
@@ -89,15 +110,34 @@ export class Board implements OnInit {
 
   private filterTasks(tasks: Task[]): Task[] {
     return tasks.filter(task => {
-      const assigneeMatch = !this.selectedAssignee || task.assignee === this.selectedAssignee;
+      let assigneeValue = '';
+      if (task.assignee) {
+        if (typeof task.assignee === 'string') {
+          assigneeValue = task.assignee;
+        } else if (typeof task.assignee === 'object' && task.assignee.email) {
+          assigneeValue = task.assignee.email;
+        }
+      }
+      const assigneeMatch = !this.selectedAssignee || assigneeValue === this.selectedAssignee;
       const priorityMatch = !this.selectedPriority || task.priority === this.selectedPriority;
-      return assigneeMatch && priorityMatch;
+      const titleMatch = !this.searchQuery || (task.title?.toLowerCase().includes(this.searchQuery.toLowerCase()));
+      return assigneeMatch && priorityMatch && titleMatch;
     });
   }
 
   private updateAssignees(): void {
     const allTasks = this.columns.flatMap(column => column.tasks);
-    this.assignees = [...new Set(allTasks.map(task => task.assignee).filter((assignee): assignee is string => !!assignee))];
+    this.assignees = [...new Set(
+      allTasks
+        .map(task => {
+          const a = task.assignee;
+          if (!a) return undefined;
+          if (typeof a === 'string') return a;
+          if (typeof a === 'object' && a.email) return a.email;
+          return undefined;
+        })
+        .filter((assignee): assignee is string => !!assignee)
+    )];
   }
 
   onDragStart(event: DragEvent, task: Task): void {
@@ -116,17 +156,26 @@ export class Board implements OnInit {
 
   onDrop(event: DragEvent, newStatus: TaskStatus): void {
     event.preventDefault();
-
     if (this.draggedTask && this.draggedTask.status !== newStatus) {
-      this.taskService.updateTaskStatus(this.draggedTask.id, newStatus);
-      this.updateFilteredData();
-      this.updateAssignees();
+      this.taskService.updateTask(this.draggedTask.id, { status: newStatus }).subscribe(() => {
+        this.taskService.getTasks().subscribe(tasks => {
+          this.allTasks = tasks;
+          this.rebuildColumns();
+          this.updateFilteredData();
+          this.updateAssignees();
+        });
+      });
     }
-
     this.draggedTask = null;
   }
 
   onTaskClicked(task: Task): void {
+    this.selectedTask = task;
+    this.showTaskForm = true;
+    // Only reset newTaskStatus if editing an existing task
+    if (task) {
+      this.newTaskStatus = null;
+    }
     this.taskClicked.emit(task);
   }
 
@@ -138,18 +187,63 @@ export class Board implements OnInit {
   }
 
   addTaskToColumn(status: TaskStatus): void {
+    this.selectedTask = null;
+    this.newTaskStatus = status;
+    this.showTaskForm = true;
     this.createTaskClicked.emit(status);
   }
 
   onTaskSaved(newTask: Task): void {
-    // Add the new task to the service, which will trigger a rebuild
-    const { id, createdDate, updatedDate, ...taskData } = newTask;
-    this.taskService.createTask(taskData);
+    // Prepare payload for backend
+    const payload: any = {
+      title: newTask.title,
+      description: newTask.description,
+      status: newTask.status,
+      priority: newTask.priority,
+      assigneeId: typeof newTask.assignee === 'object' ? newTask.assignee.id : newTask.assignee,
+      reporterId: typeof newTask.reporter === 'object' ? newTask.reporter.id : newTask.reporter,
+    };
+    if (this.selectedTask) {
+      // Only send patch if there are changes
+      const original = this.selectedTask;
+      const hasChanges =
+        original.title !== newTask.title ||
+        original.description !== newTask.description ||
+        original.status !== newTask.status ||
+        original.priority !== newTask.priority ||
+        ((original.assignee && newTask.assignee && original.assignee.id !== newTask.assignee.id) || (!original.assignee && newTask.assignee) || (original.assignee && !newTask.assignee)) ||
+        ((original.reporter && newTask.reporter && original.reporter.id !== newTask.reporter.id) || (!original.reporter && newTask.reporter) || (original.reporter && !newTask.reporter));
+      if (hasChanges) {
+        this.taskService.updateTask(newTask.id, payload).subscribe(() => {
+          this.taskService.getTasks().subscribe(tasks => {
+            this.allTasks = tasks;
+            this.rebuildColumns();
+            this.updateFilteredData();
+            this.updateAssignees();
+          });
+        });
+      }
+    } else {
+      // Creating new task
+      console.log('payload' , payload)
+      this.taskService.createTask(payload).subscribe(() => {
+        this.taskService.getTasks().subscribe(tasks => {
+          this.allTasks = tasks;
+          this.rebuildColumns();
+          this.updateFilteredData();
+          this.updateAssignees();
+        });
+      });
+    }
     this.showTaskForm = false;
+    this.selectedTask = null;
+    this.newTaskStatus = null;
   }
 
   closeTaskForm(): void {
     this.showTaskForm = false;
+    this.selectedTask = null;
+    this.newTaskStatus = null;
   }
 
   editTask(task: Task): void {
@@ -158,7 +252,14 @@ export class Board implements OnInit {
 
   deleteTask(taskId: string): void {
     if (confirm('Are you sure you want to delete this task?')) {
-      this.taskService.deleteTask(taskId);
+      this.taskService.deleteTask(taskId).subscribe(() => {
+        this.taskService.getTasks().subscribe(tasks => {
+          this.allTasks = tasks;
+          this.rebuildColumns();
+          this.updateFilteredData();
+          this.updateAssignees();
+        });
+      });
     }
   }
 }

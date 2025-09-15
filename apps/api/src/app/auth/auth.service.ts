@@ -102,10 +102,10 @@ export class AuthService {
         }
 
         // Link permissions to roles
-        if (role.name === RoleName.ADMIN) {
+        if (role.name === RoleName.OWNER) {
           const allPermissions = await this.permissionsRepository.find();
           role.permissions = allPermissions;
-        } else if (role.name === RoleName.OWNER) {
+        } else if (role.name === RoleName.ADMIN) {
           const managerPermissions = await this.permissionsRepository.find({
             where: [
               { name: PermissionName.READ_USER },
@@ -159,16 +159,20 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<User> {
     const { email, password, firstName, lastName } = registerDto;
 
+    console.log('Registering user:', { email, firstName, lastName });
+
     const existingUser = await this.usersRepository.findOne({ where: { email } });
     if (existingUser) {
+      console.log('User already exists:', email);
       throw new ConflictException('Email already registered');
     }
 
     const hashedPassword = await this.hashPassword(password);
 
     // Assign a default role (e.g., 'user')
-    const defaultUserRole = await this.rolesRepository.findOne({ where: { name: RoleName.OWNER } });
+    const defaultUserRole = await this.rolesRepository.findOne({ where: { name: RoleName.USER } });
     if (!defaultUserRole) {
+      console.log('Default user role not found!');
       throw new InternalServerErrorException('Default user role not found. Please seed roles first.');
     }
 
@@ -181,10 +185,22 @@ export class AuthService {
     });
 
     try {
-      await this.usersRepository.save(user);
-      return user;
+      console.log('Saving user:', user);
+      const result = await this.usersRepository.save(user);
+      console.log('User saved successfully:', result);
+      // Immediately check if user exists in DB after save
+      const checkUser = await this.usersRepository.findOne({ where: { email: user.email } });
+      if (!checkUser) {
+        console.error('User not found in DB after save:', user.email);
+      } else {
+        console.log('Verified user in DB after save:', checkUser);
+      }
+      return result;
     } catch (error) {
-      // Handle other potential database errors
+      console.error('Error saving user:', error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
       throw new InternalServerErrorException('Failed to register user.');
     }
   }

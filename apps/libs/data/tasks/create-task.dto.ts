@@ -3,6 +3,9 @@ import { IsString, IsNotEmpty, IsOptional, IsEnum, IsUUID } from 'class-validato
 import { TaskStatus } from '../tasks.entity' // Import TaskStatus enum
 
 export class CreateTaskDto {
+  @IsEnum(TaskStatus)
+  @IsOptional()
+  status?: TaskStatus;
   @IsString()
   @IsNotEmpty()
   title!: string;
@@ -15,4 +18,9 @@ export class CreateTaskDto {
   @IsOptional()
   @IsUUID('4', { message: 'Invalid assigneeId format' })
   assigneeId?: string; // Optional: ID of the user assigned to the task
+
+  @IsString()
+  @IsOptional()
+  @IsUUID('4', { message: 'Invalid reporterId format' })
+  reporterId?: string; // Optional: ID of the user reporting the task
 }

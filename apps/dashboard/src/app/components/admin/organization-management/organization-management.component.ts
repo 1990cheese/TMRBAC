@@ -5,11 +5,14 @@ import { Organization } from '../../../../../../libs/ui-data/organizations/organ
 import { User } from '../../../../../../libs/ui-data/users/user.model';
 import { OrganizationsService } from '../../../services/organizations.service';
 import { UsersService } from '../../../services/users.service';
+import { WarningModalComponent } from '../../shared/warning-modal.component';
+import { AuthService } from '../../../services/auth.service';
+import { SharedModule } from '../../../shared/shared.module';
 
 @Component({
   selector: 'app-organization-management',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SharedModule, WarningModalComponent],
   template: `
     <div class="p-6">
       <h1 class="text-3xl font-bold mb-6">Organization Management</h1>
@@ -43,6 +46,9 @@ import { UsersService } from '../../../services/users.service';
         </div>
         <ng-template #loadingForm><p>Loading data...</p></ng-template>
       </div>
+
+      <!-- Warning Modal -->
+      <app-warning-modal *ngIf="showModal" [message]="modalMessage" (close)="showModal = false"></app-warning-modal>
     </div>
   `,
 })
@@ -51,6 +57,8 @@ export class OrganizationManagementComponent implements OnInit {
   organizations: Organization[] = [];
   users: User[] = [];
   isLoading = true; // Add a loading flag
+  showModal = false;
+  modalMessage = '';
 
   addUserForm: FormGroup;
   successMessage = '';
@@ -60,6 +68,7 @@ export class OrganizationManagementComponent implements OnInit {
     private organizationsService: OrganizationsService,
     private usersService: UsersService,
     private fb: FormBuilder,
+    private authService: AuthService,
   ) {
     this.addUserForm = this.fb.group({
       organizationId: ['', Validators.required],
@@ -69,6 +78,19 @@ export class OrganizationManagementComponent implements OnInit {
 
   ngOnInit() {
     this.isLoading = true;
+    // Check permissions
+    if (!this.authService.isLoggedIn()) {
+      this.modalMessage = 'You must be logged in to access Organization Management.';
+      this.showModal = true;
+      this.isLoading = false;
+      return;
+    } else if (!this.authService.hasPermission('READ_ORGANIZATION')) {
+      this.modalMessage = 'You do not have permission to access Organization Management.';
+      this.showModal = true;
+      this.isLoading = false;
+      return;
+    }
+
     // Fetch users
     this.usersService.getUsers().subscribe({
       next: (usersData) => {

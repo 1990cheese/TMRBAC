@@ -5,6 +5,22 @@ import { Task, User, Organization, TaskStatus, AuditLog, AuditLogAction, RoleNam
 
 @Injectable()
 export class TasksService {
+  // Helper: get all descendant org IDs (including own org)
+  private async getOrgAndChildrenIds(orgId: string): Promise<string[]> {
+    const orgs = await this.organizationsRepository.find();
+    const ids = [orgId];
+    const stack = [orgId];
+    while (stack.length) {
+      const current = stack.pop();
+      for (const org of orgs) {
+        if (org.parentId === current) {
+          ids.push(org.id);
+          stack.push(org.id);
+        }
+      }
+    }
+    return ids;
+  }
   constructor(
     @InjectRepository(Task)
     private tasksRepository: Repository<Task>,
@@ -23,6 +39,7 @@ export class TasksService {
    * @returns The created task.
    */
   async createTask(createTaskDto: CreateTaskDto, creatorUser: User): Promise<Task> {
+  console.log('[TasksService] Received status:', createTaskDto.status);
     const creatorRole = creatorUser.roles[0]?.name;
     if (creatorRole !== RoleName.ADMIN && creatorRole !== RoleName.OWNER) {
       throw new ForbiddenException('You do not have permission to create tasks.');
@@ -37,17 +54,30 @@ export class TasksService {
       throw new NotFoundException(`Assignee with ID "${createTaskDto.assigneeId}" not found.`);
     }
 
-    // Managers can only assign tasks to users within their own organization.
-    if (creatorRole === RoleName.OWNER && assignee.organizationId !== creatorUser.organizationId) {
-      throw new ForbiddenException('You can only assign tasks to users in your own organization.');
+    // OWNERs can assign tasks to users in their org and all child orgs
+    if (creatorRole === RoleName.OWNER) {
+      const allowedOrgIds = await this.getOrgAndChildrenIds(creatorUser.organizationId);
+      if (!allowedOrgIds.includes(assignee.organizationId)) {
+        throw new ForbiddenException('You can only assign tasks to users in your organization or its children.');
+      }
+    }
+
+    let reporter: User | undefined = undefined;
+    if (createTaskDto.reporterId) {
+      reporter = await this.usersRepository.findOneBy({ id: createTaskDto.reporterId });
+      if (!reporter) {
+        throw new NotFoundException(`Reporter with ID "${createTaskDto.reporterId}" not found.`);
+      }
     }
 
     const task = this.tasksRepository.create({
       ...createTaskDto,
       creator: creatorUser,
       assignee: assignee,
+      reporter: reporter,
+      reporterId: reporter?.id,
       organizationId: assignee.organizationId, // Task belongs to the assignee's organization
-      status: TaskStatus.OPEN,
+      status: createTaskDto.status ?? TaskStatus.TODO,
     });
 
     return this.tasksRepository.save(task);
@@ -64,25 +94,30 @@ export class TasksService {
 
     const query = this.tasksRepository.createQueryBuilder('task')
       .leftJoinAndSelect('task.creator', 'creator')
-      .leftJoinAndSelect('task.assignee', 'assignee');
+      .leftJoinAndSelect('task.assignee', 'assignee')
+      .leftJoinAndSelect('task.reporter', 'reporter')
+      .addSelect([
+        'assignee.id', 'assignee.firstName', 'assignee.lastName', 'assignee.email',
+        'reporter.id', 'reporter.firstName', 'reporter.lastName', 'reporter.email'
+      ]);
 
     switch (userRole) {
-      case RoleName.ADMIN:
-        // Admin sees all tasks. No additional filters needed.
+      case RoleName.OWNER: {
+        // OWNER sees all tasks in their org and child orgs
+        const orgIds = await this.getOrgAndChildrenIds(requestingUser.organizationId);
+        query.where('task.organizationId IN (:...orgIds)', { orgIds });
         break;
-
-      case RoleName.OWNER:
-        // Manager sees all tasks within their organization.
+      }
+      case RoleName.ADMIN:
+        // ADMIN sees all tasks within their organization.
         query.where('task.organizationId = :organizationId', {
           organizationId: requestingUser.organizationId,
         });
         break;
-
       case RoleName.USER:
-        // User only sees tasks assigned to them.
+        // USER only sees tasks assigned to them.
         query.where('task.assigneeId = :userId', { userId: requestingUser.id });
         break;
-
       default:
         // If user has no recognized role, they see nothing.
         return [];
@@ -96,7 +131,9 @@ export class TasksService {
       query.andWhere('(task.title LIKE :search OR task.description LIKE :search)', { search: `%${filterDto.search}%` });
     }
 
-    return query.getMany();
+  const tasks = await query.getMany();
+  console.log(`getTasks: user=${requestingUser.email}, role=${userRole}, returned=${tasks.length} tasks`);
+  return tasks;
   }
 
 
@@ -107,18 +144,28 @@ export class TasksService {
    * @returns The found task.
    */
   async getTaskById(id: string, requestingUser: User): Promise<Task> {
-    const task = await this.tasksRepository.findOne({
-      where: { id },
-      relations: ['creator', 'assignee', 'organization'],
-    });
+    const task = await this.tasksRepository.createQueryBuilder('task')
+      .leftJoinAndSelect('task.creator', 'creator')
+      .leftJoinAndSelect('task.assignee', 'assignee')
+      .leftJoinAndSelect('task.reporter', 'reporter')
+      .leftJoinAndSelect('task.organization', 'organization')
+      .addSelect([
+        'assignee.id', 'assignee.firstName', 'assignee.lastName', 'assignee.email',
+        'reporter.id', 'reporter.firstName', 'reporter.lastName', 'reporter.email'
+      ])
+      .where('task.id = :id', { id })
+      .getOne();
 
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found.`);
     }
 
-    // Ensure the user has access to this task (belongs to the same organization)
-    if (!requestingUser.organizationId || task.organizationId !== requestingUser.organizationId) {
-      throw new UnauthorizedException('You do not have access to this task.');
+    // OWNERs can access any task; others must match organization
+    const userRole = requestingUser.roles[0]?.name;
+    if (userRole !== RoleName.OWNER) {
+      if (!requestingUser.organizationId || task.organizationId !== requestingUser.organizationId) {
+        throw new UnauthorizedException('You do not have access to this task.');
+      }
     }
 
     return task;
@@ -146,6 +193,19 @@ export class TasksService {
     } else if (updateTaskDto.assigneeId === null) { // Allow unassigning
       task.assignee = null;
       task.assigneeId = null;
+    }
+
+    // Update reporter if provided
+    if (updateTaskDto.reporterId && updateTaskDto.reporterId !== task.reporterId) {
+      const newReporter = await this.usersRepository.findOne({ where: { id: updateTaskDto.reporterId } });
+      if (!newReporter) {
+        throw new BadRequestException('New reporter not found.');
+      }
+      task.reporter = newReporter;
+      task.reporterId = newReporter.id;
+    } else if (updateTaskDto.reporterId === null) { // Allow unsetting
+      task.reporter = null;
+      task.reporterId = null;
     }
 
     // Apply other updates
